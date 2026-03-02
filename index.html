@@ -23,6 +23,10 @@
 </head>
 <body>
 
+    <script>
+        (function(){ try{ const sc=localStorage.getItem('sagar_sys_config'); if(sc){ const c=JSON.parse(sc); if(c.darkMode)document.body.classList.add('dark-mode'); if(c.themeColor&&c.themeColor!=='blue')document.body.setAttribute('data-theme',c.themeColor); } }catch(e){} })();
+    </script>
+
     <div id="authGate">
         <div class="auth-card">
             <div class="auth-brand"><i class="fas fa-cubes"></i> Sagar Traders</div>
@@ -33,10 +37,6 @@
             <div id="authError"></div>
         </div>
     </div>
-
-    <script>
-        (function(){ try{ const sc=localStorage.getItem('sagar_sys_config'); if(sc){ const c=JSON.parse(sc); if(c.darkMode)document.body.classList.add('dark-mode'); if(c.themeColor&&c.themeColor!=='blue')document.body.setAttribute('data-theme',c.themeColor); } }catch(e){} })();
-    </script>
 
     <div id="loadingOverlay">
         <div class="spinner"></div><p id="loadingText">Processing...</p>
@@ -203,7 +203,7 @@
                 <button onclick="document.getElementById('shortcutsModal').style.display='none'" style="background:none; border:none; color:var(--text); cursor:pointer; font-size:1.5rem;">&times;</button>
             </div>
             <table style="width:100%">
-                <tr><td><strong>Alt + 1-8</strong></td><td>Switch Tabs (1:Dash ... 8:Settings)</td></tr>
+                <tr><td><strong>Alt + 1-8</strong></td><td>Switch Tabs</td></tr>
                 <tr><td><strong>Alt + S</strong></td><td>Focus SKU/Search Box</td></tr>
                 <tr><td><strong>Alt + P</strong></td><td>Print / Checkout</td></tr>
                 <tr><td><strong>Alt + H</strong></td><td>Hold Cart</td></tr>
@@ -239,7 +239,7 @@
     <div class="main-content">
         
         <div class="top-bar">
-            <div class="cashier-badge">
+            <div class="cashier-badge" style="background:var(--surface); border:1px solid var(--border); padding:8px 15px; border-radius:20px; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:8px; color:var(--primary);">
                 <i class="fas fa-user-circle"></i>
                 <select id="activeCashier" style="border:none; background:transparent; font-weight:inherit; color:inherit; outline:none; cursor:pointer;">
                     <option value="Admin">Admin</option>
@@ -247,7 +247,6 @@
                     <option value="Brother">Brother</option>
                 </select>
             </div>
-            
             <button class="icon-btn" onclick="document.getElementById('shortcutsModal').style.display='flex'" title="Shortcuts"><i class="fas fa-question"></i></button>
             <button class="icon-btn" onclick="checkHeldCarts()" title="Recall Cart" style="position: relative;"><i class="fas fa-clock"></i> <span id="heldBadge" class="badge-count hidden">0</span> </button>
         </div>
@@ -288,7 +287,6 @@
         <div id="pos" class="section">
             <div class="header-row">
                 <div class="page-title">New Invoice <span class="return-indicator"><i class="fas fa-undo"></i> RETURN MODE</span></div>
-                
                 <div style="display:flex; gap:10px; flex-wrap:wrap; flex:1; justify-content:flex-end; align-items: center;">
                     <div style="display:flex; flex-direction: column;">
                         <label style="margin:0; font-size:0.6rem;">UPI</label>
@@ -310,7 +308,6 @@
                             <option value="Retail">Retail Invoice</option><option value="Tax">Tax Invoice (GST)</option><option value="Quotation">Quotation</option>
                         </select>
                     </div>
-                    
                     <button class="btn btn-danger" onclick="toggleReturnMode()" title="Toggle Returns Mode"><i class="fas fa-undo"></i></button>
                     <button class="btn btn-warning" onclick="holdCart()"><i class="fas fa-pause"></i> Hold</button>
                     <button class="btn btn-info" onclick="printPaymentSlip()" title="Print Payment Details Only"><i class="fas fa-qrcode"></i> Pay Slip</button>
@@ -391,9 +388,7 @@
                     
                     <div style="margin-top:20px; border-top:2px solid var(--border); padding-top:15px;">
                         <div style="display:flex; justify-content:space-between;"><span>Subtotal:</span><span id="subTotalDisplay">₹0.00</span></div>
-                        
                         <div id="taxDisplayRow" style="font-size:0.8rem; color:var(--text-light); margin: 5px 0;"></div>
-                        
                         <div style="margin-top:5px; text-align:right;"><button onclick="toggleDiscount()" style="background:none; border:none; color:var(--primary); cursor:pointer; font-size:0.8rem;"><i class="fas fa-tags"></i> Add Discount</button></div>
                         <div id="discountContainer" class="hidden" style="margin:10px 0;">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -420,7 +415,6 @@
              <div class="header-row">
                 <div class="page-title">Analytics & Profit</div>
             </div>
-            
             <div class="grid-2">
                 <div class="card">
                     <h3>Net Profit (Estimated)</h3>
@@ -432,7 +426,6 @@
                      <canvas id="salesChart" style="max-height: 200px;"></canvas>
                 </div>
             </div>
-            
             <div class="grid-2">
                 <div class="card">
                     <h3>Top Categories</h3>
@@ -499,8 +492,7 @@
                         </div>
                         <p id="ledgerCustPhone" style="margin:0 0 15px 0; color:var(--text-light);">Phone: -</p>
                         
-                        <div class="ledger-summary" id="ledgerBalanceDisplay" style="text-align:left;">
-                            </div>
+                        <div class="ledger-summary" id="ledgerBalanceDisplay" style="text-align:left;"></div>
                         <div style="text-align:center; font-size:0.8rem; margin-top:-10px; margin-bottom:15px; font-weight:bold;" id="ledgerBalanceLabel"></div>
                         
                         <div style="text-align:right;">
