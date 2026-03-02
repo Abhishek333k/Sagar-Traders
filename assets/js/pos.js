@@ -2,6 +2,7 @@
 // POS & CART ENGINE (assets/js/pos.js)
 // ============================================================================
 
+// --- CART MANAGEMENT ---
 function toggleReturnMode() { 
     returnMode = !returnMode; 
     document.getElementById('posItemCard').classList.toggle('return-mode-active', returnMode); 
@@ -17,11 +18,16 @@ function addItem() {
     if(!desc || qty === 0) return showToast("Invalid Item", 'error');
     if(returnMode) qty = -Math.abs(qty); else qty = Math.abs(qty);
 
-    // [v6.2] Stock Reservation Logic
+    // [AUDIT FIX] Hard Stock Reservation Logic
     if (sku && productDB[sku]) {
         const available = productDB[sku].stock - (reservedStock[sku] || 0);
-        if (available < qty && !returnMode) {
-            showToast(`Warning: Only ${available} left in stock!`, 'warning');
+        
+        if (!returnMode && qty > available) {
+            showToast(`STOCK BLOCK: Only ${available} units available!`, 'error');
+            AudioEngine.playError();
+            document.getElementById('itemQty').classList.add('input-error');
+            setTimeout(()=> document.getElementById('itemQty').classList.remove('input-error'), 500);
+            return; // STOP THE FUNCTION. Do not add to cart.
         }
         reservedStock[sku] = (reservedStock[sku] || 0) + qty;
     }
@@ -29,6 +35,7 @@ function addItem() {
     invoiceItems.push({ sku, desc, qty, rate, gst: parseFloat(document.getElementById('itemGst').value)||0 });
     AudioEngine.playBeep();
     
+    // Reset Fields
     document.getElementById('skuInput').value=''; document.getElementById('itemDesc').value=''; document.getElementById('itemQty').value='1';
     document.getElementById('itemRate').value=''; document.getElementById('itemGst').value=systemConfig.defaultGst || ''; 
     document.getElementById('skuInput').focus(); 
@@ -46,8 +53,10 @@ function removeItem(i) {
 function clearCart() { 
     if(!invoiceItems.length) return;
     if(!confirm("Clear the current cart?")) return;
-    invoiceItems = []; reservedStock = {}; 
-    renderItems(); showToast("Cart Cleared", "info");
+    invoiceItems = []; 
+    reservedStock = {}; // Release all reserved items globally
+    renderItems(); 
+    showToast("Cart Cleared", "info");
 }
 
 function editItem(i) {
@@ -68,7 +77,18 @@ function updateItem() {
     const oldItem = invoiceItems[editingItemIndex];
     if(oldItem.sku && reservedStock[oldItem.sku]) reservedStock[oldItem.sku] -= oldItem.qty;
     const newSku = document.getElementById('skuInput').value.trim().toUpperCase();
-    if(newSku && productDB[newSku]) reservedStock[newSku] = (reservedStock[newSku] || 0) + qty;
+    
+    // Hard block check on edit
+    if(newSku && productDB[newSku]) {
+        const available = productDB[newSku].stock - (reservedStock[newSku] || 0);
+        if (!returnMode && qty > available) {
+            showToast(`STOCK BLOCK: Only ${available} units available!`, 'error');
+            AudioEngine.playError();
+            if(oldItem.sku) reservedStock[oldItem.sku] += oldItem.qty; // Re-reserve the old amount
+            return;
+        }
+        reservedStock[newSku] = (reservedStock[newSku] || 0) + qty;
+    }
 
     invoiceItems[editingItemIndex] = {
         sku: newSku, desc: document.getElementById('itemDesc').value,
@@ -102,6 +122,7 @@ function renderItems() {
     document.getElementById('discAmountDisplay').innerText = "-₹"+disc.toFixed(2);
     document.getElementById('grandTotal').innerText = "₹"+grand.toFixed(2);
     
+    // Render Tax Slabs
     let taxHtml = `<span>Tax (Included/Extra):</span><span id="taxTotalDisplay">₹${tax.toFixed(2)}</span>`;
     if (Object.keys(taxSlabs).length > 0) {
         taxHtml += `<div style="margin-top:5px; padding:8px; background:var(--bg); border-radius:6px; font-size:0.75rem; border:1px solid var(--border);">`;
@@ -110,6 +131,37 @@ function renderItems() {
     }
     document.getElementById('taxDisplayRow').innerHTML = taxHtml;
     updateDashboardQR(grand);
+}
+
+// --- IFRAME SILENT PRINTING (Bypasses Popup Blockers) ---
+function silentPrint(htmlContent) {
+    let printFrame = document.getElementById('hiddenPrintFrame');
+    if (!printFrame) {
+        printFrame = document.createElement('iframe');
+        printFrame.id = 'hiddenPrintFrame';
+        printFrame.style.position = 'fixed';
+        printFrame.style.right = '0';
+        printFrame.style.bottom = '0';
+        printFrame.style.width = '0';
+        printFrame.style.height = '0';
+        printFrame.style.border = '0';
+        document.body.appendChild(printFrame);
+    }
+    printFrame.contentWindow.document.open();
+    printFrame.contentWindow.document.write(htmlContent);
+    printFrame.contentWindow.document.close();
+    printFrame.contentWindow.focus();
+    
+    // Slight delay to allow CSS/Logos to render inside the iframe before triggering printer
+    setTimeout(() => { printFrame.contentWindow.print(); }, 500);
+}
+
+function generateNextInvoiceNumber() {
+    const d = new Date(); const m = (d.getMonth() + 1).toString().padStart(2, '0'); const day = d.getDate().toString().padStart(2, '0');
+    const prefix = `ST-${m}-${day}-`;
+    const lastSale = salesHistory.find(s => s.invoiceNo && s.invoiceNo.startsWith(prefix));
+    let seq = 1; if (lastSale) seq = parseInt(lastSale.invoiceNo.split('-').pop()) + 1;
+    return `${prefix}${seq.toString().padStart(3, '0')}`; 
 }
 
 // --- CHECKOUT LOGIC ---
@@ -134,16 +186,19 @@ function finalizeAndPrint(splitDetails) {
     
     if(!confirm(`Confirm ${document.getElementById('invMode').value} of ₹${grandTotal}?`)) return;
 
+    // 1. Commit Stock (Permanently deduct reserved items)
     invoiceItems.forEach(i => { if(i.sku && productDB[i.sku]) productDB[i.sku].stock -= i.qty; });
-    reservedStock = {}; 
+    reservedStock = {}; // Clear reserves
 
+    // 2. Update Customer
     if(cPhone) {
         const c = { name: cName, phone: cPhone, attn: document.getElementById('custAttn').value, altPhone: document.getElementById('custAltPhone').value, address: document.getElementById('custAddr').value, gst: document.getElementById('custGst').value };
         const idx = customerDB.findIndex(x => x.phone === cPhone);
         if(idx !== -1) customerDB[idx] = c; else customerDB.push(c);
-        pushCustomerToCloud(c);
+        pushCustomerToCloud(c); // Sync to firebase
     }
 
+    // 3. Create Sale Object
     let totalCost = 0;
     invoiceItems.forEach(i => { if(i.sku && productDB[i.sku]) totalCost += (productDB[i.sku].purchaseRate || 0) * Math.abs(i.qty); });
     
@@ -158,19 +213,22 @@ function finalizeAndPrint(splitDetails) {
     salesHistory.unshift(newSale); if(salesHistory.length>500) salesHistory.pop();
     saveData(); renderSalesReports(); syncToCloud(newSale); 
 
+    // 4. Update Ledger
     if(pMode === 'Credit' && cPhone) {
         const ledg = { id: generateUUID(), phone: cPhone, date: new Date().toISOString().split('T')[0], type: 'DEBIT', amount: grandTotal, desc: `Inv #${invNo}`, mode: 'Credit', timestamp: Date.now(), cashier: newSale.cashier };
         ledgerDB.push(ledg); pushLedgerToCloud(ledg);
     }
 
+    // 5. Compile Print HTML & Clear Cart
+    // Call generatePrintHTML (located in templates.js)
     const finalHTML = generatePrintHTML(invNo); 
     invoiceItems = []; renderItems(); saveData(); 
-
-    try {
-        const win = window.open('', '_blank', 'width=900,height=800');
-        if (win) { win.document.write(finalHTML); win.document.close(); win.onload = () => { win.focus(); win.print(); }; } 
-        else { showToast("Bill Saved! (Pop-up blocked)", 'warning'); AudioEngine.playSuccess(); }
-    } catch (e) { showToast("Bill Saved.", 'success'); }
+    
+    showToast("Bill Saved. Sending to printer...", 'success');
+    AudioEngine.playSuccess();
+    
+    // 6. Print silently to avoid popup blocker
+    silentPrint(finalHTML);
 }
 
 // --- SPLIT PAYMENT ---
@@ -226,10 +284,14 @@ function checkHeldCarts(searchQuery = '') {
 function closeHeldModal() { document.getElementById('heldCartsModal').style.display = 'none'; }
 function recallCart(i) {
     if(invoiceItems.length && !confirm("Current cart has items. Overwrite with held cart?")) return;
+    
+    // Release existing cart stock
+    reservedStock = {}; 
+    
     const c = heldCarts[i]; invoiceItems = c.items;
     
-    // Re-reserve stock
-    reservedStock={}; invoiceItems.forEach(it => { if(it.sku) reservedStock[it.sku] = (reservedStock[it.sku]||0) + it.qty; });
+    // Re-reserve stock for recalled items
+    invoiceItems.forEach(it => { if(it.sku) reservedStock[it.sku] = (reservedStock[it.sku]||0) + it.qty; });
     
     document.getElementById('custName').value = c.cust.name || ''; document.getElementById('custPhone').value = c.cust.phone || '';
     heldCarts.splice(i, 1); saveData(); closeHeldModal(); renderItems(); updateHeldBadge(); AudioEngine.playChime();
