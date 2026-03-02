@@ -1,0 +1,26 @@
+/* Paste your entire <style> block from your original HTML here. */
+/* Just make sure to ADD these v6.2 specific updates to the table sections: */
+
+.table-responsive { max-height: 60vh; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
+table { width: 100%; border-collapse: collapse; position: relative; }
+th { 
+    font-size: 0.75rem; text-transform: uppercase; color: var(--text-light); font-weight: 700; 
+    position: sticky; top: 0; background: var(--bg); z-index: 2; box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1); 
+}
+td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); color: var(--text); }
+.text-right { text-align: right; }
+
+#loadingOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.8); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; backdrop-filter: blur(4px); }
+.spinner { border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* Auth Gate Styles */
+#authGate { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, rgba(15,23,42,0.9), rgba(30,41,59,0.95)); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+.auth-card { background: var(--surface); width: 100%; max-width: 380px; padding: 40px 30px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); border: 1px solid rgba(255,255,255,0.1); text-align: center; animation: slideUpFade 0.5s ease-out forwards; }
+.auth-brand { font-size: 1.8rem; font-weight: 800; color: var(--primary); margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.auth-subtitle { font-size: 0.75rem; font-weight: 600; color: var(--text-light); margin-bottom: 30px; text-transform: uppercase; letter-spacing: 1px; }
+.auth-input-group { text-align: left; margin-bottom: 20px; }
+.auth-input-group label { font-size: 0.75rem; font-weight: 600; color: var(--text-light); margin-bottom: 8px; display: block; }
+.auth-input-group input { width: 100%; padding: 12px 15px; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--input-bg); color: var(--text); box-sizing: border-box; }
+.auth-btn { width: 100%; padding: 14px; font-size: 1rem; font-weight: 700; border-radius: 8px; background: var(--primary); color: white; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; }
+#authError { background: #fee2e2; color: #b91c1c; padding: 10px; border-radius: 6px; font-size: 0.85rem; margin-top: 15px; display: none; }

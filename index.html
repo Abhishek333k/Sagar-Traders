@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sagar Traders - POS v6.2 (Enterprise)</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.7/handlebars.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+
+    <div id="authGate">
+        <div class="auth-card">
+            <div class="auth-brand"><i class="fas fa-cubes"></i> Sagar Traders</div>
+            <div class="auth-subtitle"><i class="fas fa-shield-alt"></i> Secure System Gateway</div>
+            <div class="auth-input-group"><label>Administrator Email</label><input type="email" id="authEmail" placeholder="admin@sagartraders.in"></div>
+            <div class="auth-input-group"><label>Passkey</label><input type="password" id="authPassword" placeholder="••••••••" onkeydown="if(event.key === 'Enter') loginSystem()"></div>
+            <button class="auth-btn" id="authSubmitBtn" onclick="loginSystem()"><i class="fas fa-sign-in-alt"></i> Access System</button>
+            <div id="authError"></div>
+        </div>
+    </div>
+
+    <script>
+        (function(){ try{ const sc=localStorage.getItem('sagar_sys_config'); if(sc){ const c=JSON.parse(sc); if(c.darkMode)document.body.classList.add('dark-mode'); if(c.themeColor&&c.themeColor!=='blue')document.body.setAttribute('data-theme',c.themeColor); } }catch(e){} })();
+    </script>
+
+    <div id="loadingOverlay">
+        <div class="spinner"></div><p id="loadingText">Processing...</p>
+    </div>
+    
+    <div id="toastContainer"></div>
+    <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+
+    <div class="sidebar" id="sidebar">
+        <div class="brand"><i class="fas fa-cubes"></i> Sagar Traders <span style="font-size:0.7rem; background:var(--primary); color:white; padding:2px 5px; border-radius:4px;">v6.2</span></div>
+        <div class="nav-item active" onclick="showSection('dashboard', this)"><i class="fas fa-th-large"></i> Dashboard</div>
+        <div class="nav-item" onclick="showSection('pos', this)"><i class="fas fa-cash-register"></i> POS & Billing</div>
+        <div class="nav-item" onclick="showSection('analytics', this)"><i class="fas fa-chart-pie"></i> Analytics</div>
+        <div class="nav-item" onclick="showSection('reports', this)"><i class="fas fa-chart-line"></i> Sales Reports</div>
+        <div class="nav-item" onclick="showSection('ledger', this)"><i class="fas fa-book"></i> Ledger / Khata</div>
+        <div class="nav-item" onclick="showSection('customers', this)"><i class="fas fa-users"></i> Customer Database</div>
+        <div class="nav-item" onclick="showSection('database', this)"><i class="fas fa-database"></i> Product Database</div>
+        <div class="nav-item" onclick="showSection('settings', this)"><i class="fas fa-cog"></i> System Settings <span id="adminLockIcon" style="margin-left:auto; font-size:0.8rem;"><i class="fas fa-lock"></i></span></div>
+        <div class="sidebar-bottom">
+            <div class="nav-item" onclick="toggleFullScreen()"><i class="fas fa-expand"></i> Full Screen</div>
+            <div class="db-status">DB: <span id="dbCount">0</span> Items</div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        
+        <div class="top-bar">
+            <div style="background:var(--surface); border:1px solid var(--border); padding:8px 15px; border-radius:20px; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:8px; color:var(--primary);">
+                <i class="fas fa-user-circle"></i>
+                <select id="activeCashier" style="border:none; background:transparent; font-weight:inherit; color:inherit; outline:none; cursor:pointer; padding:0;">
+                    <option value="Admin">Admin (Main)</option>
+                    <option value="Father">Father</option>
+                    <option value="Brother">Brother</option>
+                    <option value="Staff 1">Staff 1</option>
+                </select>
+            </div>
+            <button class="icon-btn" onclick="document.getElementById('shortcutsModal').style.display='flex'" title="Shortcuts"><i class="fas fa-question"></i></button>
+            <button class="icon-btn" onclick="checkHeldCarts()" title="Recall Cart" style="position: relative;"><i class="fas fa-clock"></i> <span id="heldBadge" class="badge-count hidden">0</span> </button>
+        </div>
+
+        </div>
+
+    <script src="assets/js/main.js"></script> <script src="assets/js/utils.js"></script>
+    <script src="assets/js/audio.js"></script>
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/storage.js"></script>
+    <script src="assets/js/ui.js"></script>
+    <script src="assets/js/templates.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/sync.js"></script>
+    <script src="assets/js/customers.js"></script>
+    <script src="assets/js/products.js"></script>
+    <script src="assets/js/pos.js"></script>
+    <script src="assets/js/ledger.js"></script>
+    <script src="assets/js/reports.js"></script>
+    <script src="assets/js/scanner.js"></script>
+</body>
+</html>
