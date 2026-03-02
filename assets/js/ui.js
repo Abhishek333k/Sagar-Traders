@@ -1,5 +1,70 @@
-// --- UI CONTROLS & NOTIFICATIONS ---
+// ============================================================================
+// UI CONTROLS, MODALS & NAVIGATION (assets/js/ui.js)
+// ============================================================================
 
+// --- NAVIGATION ---
+function showSection(id, btn) {
+    // 1. Guard against unsaved changes
+    if(isSettingsDirty && !confirm("You have unsaved changes in Settings! Discard them and leave?")) return;
+    else if (isSettingsDirty) discardSettings();
+
+    // 2. 5-Minute Admin Lock for Settings
+    if(id === 'settings' && Date.now() > adminSessionExpiry) {
+        return verifyPin(() => showSection(id, btn));
+    }
+
+    // 3. Switch Tabs
+    document.querySelectorAll('.section').forEach(e => e.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    
+    if(btn) {
+        document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+        btn.classList.add('active');
+    }
+    
+    // 4. Contextual Refresh
+    if(id === 'dashboard') renderDashboard();
+    if(id === 'reports') renderSalesReports();
+    if(id === 'ledger') renderLedgerAccountsList();
+    if(id === 'settings') loadSettingsToUI();
+    if(id === 'analytics') renderAnalytics(); 
+}
+
+// --- SECURITY PIN LOGIC ---
+function verifyPin(callback) {
+    if(!systemConfig.securityPin || Date.now() < adminSessionExpiry) return callback();
+    
+    window.pendingSecureAction = callback;
+    document.getElementById('securityPinInput').value = '';
+    document.getElementById('pinModal').style.display = 'flex';
+    document.getElementById('securityPinInput').focus();
+}
+
+function submitPin() {
+    const entered = document.getElementById('securityPinInput').value;
+    const actual = systemConfig.securityPin || '0000';
+    
+    if(entered === actual) {
+        document.getElementById('pinModal').style.display = 'none';
+        adminSessionExpiry = Date.now() + (5 * 60 * 1000); // Unlock for 5 mins
+        AudioEngine.playSuccess();
+        if(window.pendingSecureAction) window.pendingSecureAction();
+        window.pendingSecureAction = null;
+    } else {
+        showToast("Incorrect PIN", 'error');
+        AudioEngine.playError();
+        document.getElementById('securityPinInput').value = '';
+        document.getElementById('securityPinInput').classList.add('input-error');
+        setTimeout(() => document.getElementById('securityPinInput').classList.remove('input-error'), 500);
+    }
+}
+
+function closePinModal() { 
+    document.getElementById('pinModal').style.display = 'none'; 
+    window.pendingSecureAction = null; 
+}
+
+// --- TOASTS & OVERLAYS ---
 function showToast(msg, type='info') {
     const c = document.getElementById('toastContainer');
     const t = document.createElement('div'); 
@@ -23,6 +88,7 @@ function showLoading(show, txt="Processing...") {
     }
 }
 
+// --- UTILS ---
 function toggleSidebar() { 
     document.getElementById('sidebar').classList.toggle('open'); 
 }
@@ -32,7 +98,6 @@ function toggleFullScreen() {
     else if (document.exitFullscreen) document.exitFullscreen(); 
 }
 
-// --- GLOBAL KEYBOARD NAVIGATION ---
 function handleSearchNav(e, context) {
     const containerId = context === 'pos' ? 'customerResults' : 'ledgerCustResults';
     const container = document.getElementById(containerId);

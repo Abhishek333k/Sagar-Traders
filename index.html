@@ -40,7 +40,6 @@
     <div id="loadingOverlay">
         <div class="spinner"></div><p id="loadingText">Processing...</p>
     </div>
-    
     <div id="toastContainer"></div>
     <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
 
@@ -229,6 +228,7 @@
         <div class="nav-item" onclick="showSection('customers', this)"><i class="fas fa-users"></i> Customer Database</div>
         <div class="nav-item" onclick="showSection('database', this)"><i class="fas fa-database"></i> Product Database</div>
         <div class="nav-item" onclick="showSection('settings', this)"><i class="fas fa-cog"></i> System Settings <span id="adminLockIcon" style="margin-left:auto; font-size:0.8rem;"><i class="fas fa-lock"></i></span></div>
+        
         <div class="sidebar-bottom">
             <div class="nav-item" onclick="toggleFullScreen()"><i class="fas fa-expand"></i> Full Screen</div>
             <div class="db-status">DB: <span id="dbCount">0</span> Items</div>
@@ -238,14 +238,15 @@
     <div class="main-content">
         
         <div class="top-bar">
-            <div style="background:var(--surface); border:1px solid var(--border); padding:8px 15px; border-radius:20px; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:8px; color:var(--primary);">
+            <div class="cashier-badge" style="background:var(--surface); border:1px solid var(--border); padding:8px 15px; border-radius:20px; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:8px; color:var(--primary);">
                 <i class="fas fa-user-circle"></i>
-                <select id="activeCashier" style="border:none; background:transparent; font-weight:inherit; color:inherit; outline:none; cursor:pointer; padding:0;">
+                <select id="activeCashier" style="border:none; background:transparent; font-weight:inherit; color:inherit; outline:none; cursor:pointer;">
                     <option value="Admin">Admin (Main)</option>
                     <option value="Father">Father</option>
                     <option value="Brother">Brother</option>
                 </select>
             </div>
+            
             <button class="icon-btn" onclick="document.getElementById('shortcutsModal').style.display='flex'" title="Shortcuts"><i class="fas fa-question"></i></button>
             <button class="icon-btn" onclick="checkHeldCarts()" title="Recall Cart" style="position: relative;"><i class="fas fa-clock"></i> <span id="heldBadge" class="badge-count hidden">0</span> </button>
         </div>
@@ -547,71 +548,10 @@
             </div>
         </div>
 
-        <div id="customers" class="section">
-            <div class="header-row">
-                <div class="page-title">Customer Database</div>
-                <div style="display:flex; gap:10px;">
-                    <button class="btn btn-primary" onclick="openCustModal()"><i class="fas fa-plus"></i> New Customer</button>
-                    <button class="btn btn-outline" onclick="exportCustomers()"><i class="fas fa-download"></i> CSV</button>
-                </div>
-            </div>
-            <div class="card">
-                <div style="margin-bottom:15px; border-bottom:1px solid var(--border); padding-bottom:15px;">
-                    <h4>Bulk Customer Import (Add / Update)</h4>
-                    <p style="font-size:0.8rem; color:var(--text-light)">Format: Name, Phone, Attn, Alt Phone, Address, GST.</p>
-                    <div style="display:flex; gap:10px; align-items:center;">
-                        <input type="file" id="custImportFile" accept=".csv">
-                        <button class="btn btn-primary" onclick="processCustomerImport()">Import Customers</button>
-                    </div>
-                </div>
-                <div style="margin-bottom:15px;"><input type="text" placeholder="Search Customer..." onkeyup="renderCustomerTable(this.value)"></div>
-                <div class="table-responsive" style="max-height:60vh;">
-                    <table id="custTable">
-                        <thead><tr><th>Name/Company</th><th>Contact</th><th>Phone</th><th>Alt Phone</th><th>Address</th><th>GSTIN</th><th class="text-right">Action</th></tr></thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div id="database" class="section">
-            <div class="card">
-                <div class="grid-2">
-                    <div style="background:var(--profile-active-bg); padding:15px; border-radius:8px; border:1px solid var(--primary);">
-                        <h4 style="margin-top:0;"><i class="fas fa-cloud-download-alt"></i> Sync from Google Sheets</h4>
-                        <p style="font-size:0.8rem; color:var(--text-light)">Pull latest prices/stock from your online sheet.</p>
-                        <button class="btn btn-primary" style="width:100%" onclick="syncProductsFromCloud()">Sync Now</button>
-                    </div>
-                    <div>
-                        <h4 style="margin-top:0;">Bulk Data Management</h4>
-                        <div style="display:flex; gap:10px; align-items:center;">
-                            <input type="file" id="dbFiles" accept=".csv" multiple style="width:auto;">
-                            <button class="btn btn-outline" onclick="processDbFiles()">Import CSV</button>
-                            <button class="btn btn-primary" onclick="downloadTemplate()"><i class="fas fa-download"></i> Export Stock CSV</button>
-                        </div>
-                        <p style="font-size:0.7rem; color:var(--text-light); margin-top:5px;">Use "Export" to download your current stock, edit in Excel, and re-import to update.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="card" style="margin-top:20px;">
-                <div class="grid-4" style="margin-bottom:15px;">
-                    <input type="text" id="prodSearch" placeholder="Search SKU or Name..." onkeyup="renderProductTable()">
-                    <select id="filterCat" onchange="renderProductTable()"><option value="">All Categories</option></select>
-                    <select id="filterType" onchange="renderProductTable()"><option value="">All Types</option></select>
-                    <select id="filterHp" onchange="renderProductTable()"><option value="">All HP</option></select>
-                </div>
-                <div class="table-responsive" style="max-height:60vh;">
-                    <table id="prodTable">
-                        <thead><tr><th>SKU</th><th>Description / Name</th><th>Category</th><th class="text-right">Pur. Price</th><th class="text-right">Rate</th><th class="text-right">Stock</th><th class="text-right">Action</th></tr></thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
         <div id="settings" class="section">
             <div class="header-row"><div class="page-title">System Settings</div></div>
             <div class="settings-grid">
+                
                 <div class="card">
                     <h3><i class="fas fa-file-invoice-dollar"></i> Bill Configuration</h3>
                     <div class="grid-2">
@@ -646,19 +586,17 @@
                         <label>Notifications & Widgets</label>
                         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; background:var(--bg); padding:10px; border-radius:6px;">
                             <span><i class="fas fa-bell-slash"></i>Backup Warning Banner</span>
-                            <div style="position:relative; display:inline-block; width:40px; height:24px;">
-                                <input type="checkbox" id="settingBackupWarn" style="opacity:0; width:0; height:0;" onchange="markSettingsDirty()">
-                                <span onclick="document.getElementById('settingBackupWarn').click();" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#ccc; transition:.4s; border-radius:34px;"></span>
-                                <span onclick="document.getElementById('settingBackupWarn').click();" style="position:absolute; content:''; height:16px; width:16px; left:4px; bottom:4px; background-color:white; transition:.4s; border-radius:50%;"></span>
-                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="settingBackupWarn" onchange="markSettingsDirty()">
+                                <span class="toggle-slider"></span>
+                            </label>
                         </div>
                         <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg); padding:10px; border-radius:6px;">
                             <span><i class="fas fa-layer-group"></i>Low Stock Widget</span>
-                            <div style="position:relative; display:inline-block; width:40px; height:24px;">
-                                <input type="checkbox" id="settingLowStock" style="opacity:0; width:0; height:0;" onchange="markSettingsDirty()">
-                                <span onclick="document.getElementById('settingLowStock').click();" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#ccc; transition:.4s; border-radius:34px;"></span>
-                                <span onclick="document.getElementById('settingLowStock').click();" style="position:absolute; content:''; height:16px; width:16px; left:4px; bottom:4px; background-color:white; transition:.4s; border-radius:50%;"></span>
-                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="settingLowStock" onchange="markSettingsDirty()">
+                                <span class="toggle-slider"></span>
+                            </label>
                         </div>
                     </div>
                     <div style="margin-bottom:15px;"><button class="btn btn-outline" onclick="toggleTheme()" style="width:100%;"><i class="fas fa-moon"></i> Toggle Dark/Light Mode</button></div>
@@ -673,10 +611,32 @@
                     </div>
                 </div>
 
+                <div class="card" style="border: 2px solid var(--primary);">
+                    <h3><i class="fas fa-cloud"></i> Cloud Connections</h3>
+                    <div style="margin-top:15px;">
+                        <label>Product Database Sync URL (Google Script)</label>
+                        <input type="text" id="settingProductUrl" placeholder="Paste Web App URL here" oninput="markSettingsDirty()">
+                        <p style="font-size:0.7rem; color:var(--text-light);">Paste the 'Web App URL' from your Google Sheet deployment here.</p>
+                        <button class="btn btn-sm btn-success" style="margin-top:5px; width:100%;" onclick="syncProductsFromCloud()"><i class="fas fa-sync"></i> Sync Products Now</button>
+                    </div>
+                    <div style="margin-top:15px; border-top: 1px dashed var(--border); padding-top:10px;">
+                        <label>Sales Cloud Sync URL (Backup)</label>
+                        <input type="text" id="settingSyncUrl" placeholder="Paste Web App URL here" oninput="markSettingsDirty()">
+                    </div>
+                </div>
+
                 <div class="card">
                     <h3><i class="fas fa-database"></i> Data Management</h3>
                     <div style="display:flex; flex-direction:column; gap:10px; margin-top:15px;">
                         <button class="btn btn-primary" onclick="backupData('full')"><i class="fas fa-download"></i> Full Local Backup</button>
+                        
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
+                            <button class="btn btn-sm btn-outline" onclick="backupData('products')">Products Only</button>
+                            <button class="btn btn-sm btn-outline" onclick="backupData('customers')">Customers Only</button>
+                            <button class="btn btn-sm btn-outline" onclick="backupData('sales')">Sales History</button>
+                            <button class="btn btn-sm btn-outline" onclick="backupData('ledger')">Ledger/Khata</button>
+                        </div>
+                        
                         <div style="border-top:1px dashed var(--border); padding-top:10px; margin-top:5px;">
                             <label>Repair & Restore</label>
                             <div style="display:flex; gap:10px; margin-bottom:10px;">
@@ -685,7 +645,16 @@
                             </div>
                             <div style="display:flex; gap:5px;"><input type="file" id="restoreFile" accept=".json"><button class="btn btn-info" onclick="restoreData()"><i class="fas fa-upload"></i> Restore</button></div>
                         </div>
-                         <div style="border-top:1px dashed var(--border); padding-top:10px; margin-top:5px;">
+
+                        <div style="border-top:1px dashed var(--border); padding-top:10px; margin-top:5px;">
+                            <label style="color:var(--primary);">Hive Mind Sync</label>
+                            <div style="display:flex; gap:5px;">
+                                <button class="btn btn-primary" style="width:100%;" onclick="syncFromCloud()"><i class="fas fa-cloud-download-alt"></i> Restore from Cloud</button>
+                            </div>
+                            <p style="font-size:0.7rem; color:var(--text-light); margin-top:5px;">Pull the latest "Full Backup" from your Google Drive.</p>
+                        </div>
+                        
+                        <div style="border-top:1px dashed var(--border); padding-top:10px; margin-top:5px;">
                             <label style="color:var(--danger);">Danger Zone</label>
                             <button class="btn btn-danger" style="width:100%;" onclick="factoryReset()"><i class="fas fa-biohazard"></i> Factory Reset</button>
                         </div>
@@ -759,7 +728,6 @@
     <script src="assets/js/ui.js"></script>
     <script src="assets/js/dashboard.js"></script> 
     <script src="assets/js/templates.js"></script>
-    <script src="assets/js/auth.js"></script>
     <script src="assets/js/sync.js"></script>
     <script src="assets/js/customers.js"></script>
     <script src="assets/js/products.js"></script>
@@ -767,6 +735,7 @@
     <script src="assets/js/ledger.js"></script>
     <script src="assets/js/reports.js"></script>
     <script src="assets/js/scanner.js"></script>
+    <script src="assets/js/auth.js"></script>
 
 </body>
 </html>
